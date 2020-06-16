@@ -3,15 +3,15 @@ class MaxHeap {
 
   /**
    * Create a new empty max heap of a given size, optionally from an existing array
-   * 
+   *
    * @param {number} [size=1023] Maximum capacity of the queue
    * @param {{priority: number, element: *}[]} [fromArray] Build the heap from this array instead. The given array must be 1-indexed, and records must have the given form.
    */
   constructor({ size = this.constructor.DEFAULT_SIZE, fromArray } = {}) {
     if (fromArray) {
       this._storage = fromArray;
-      this._size = fromArray.length - 1;
-      this._count = this._size;
+      this.size = fromArray.length - 1;
+      this._count = this.size;
       this._buildheap();
 
     } else {
@@ -32,7 +32,7 @@ class MaxHeap {
 
   /**
    * Use a heap to sort an array in-place in n*log(n) time
-   * 
+   *
    * @param {{priority: number, element: *}[]} [array] Data to sort. The given array must be 1-indexed, and records must have the given form.
    */
   static heapsort(array) {
@@ -61,41 +61,88 @@ class MaxHeap {
     this._storage[j] = temp;
   }
 
-  _float(i) {
-    // TODO
+  _float(element) {
+    const priority = (input) => this._storage[input].priority;
+    let parent = this._parent(element);
+    while(parent > 0 && priority(element) > priority(parent)){
+      this._swap(element, parent);
+      element = parent;
+      parent = this._parent(element);
+    }
   }
 
-  _sink(i) {
-    // TODO
+  _sink(element) {
+    const inBounds = (element) => element <= this._count;
+    const priority = (element) => this._storage[element].priority;
+    let finished = false;
+    while(!finished) {
+      const left = this._left(element);
+      const right = this._right(element);
+
+      let max = element;
+      if(inBounds(left) && priority(left) > priority(element)) {
+        max = left;
+      }
+      if (inBounds(right) && priority(right) > priority(max)) {
+        max = right;
+      }
+      if (max === element) {
+        finished = true;
+      } else {
+        this._swap(element, max);
+        element = max;
+      }
+    }
   }
 
   _buildheap() {
-    // TODO
+    const midpoint = Math.floor(this.size / 2);
+    for (let i = midpoint; i > 0; i -=1) {
+      this._sink(i);
+    }
   }
 
   /**
    * Add a record to the queue with a given priority
-   * 
+   *
    * @param {number} priority Priority of the record
    * @param {*} element Data to store in this record
    * @throws If the heap is full
    */
   insert(priority, element) {
-    // TODO
+    if (this._count === this.size){
+      throw new Error('Heap is full. Cannot insert.');
+    }
+
+    this._count += 1;
+    const record = this._storage[this._count];
+    record.priority = priority;
+    record.element = element;
+    this._float(this._count);
   }
 
   /**
    * Remove and return the record with the highest priority
-   * 
+   *
    * @returns {*} The data stored in the highest-priority record, or undefined if the queue is empty
    */
   removeMax() {
-    // TODO
+    if (this._count === 0) {
+      return undefined;
+    }
+
+    const element = this._storage[1].element;
+    this._storage[1].element = undefined;
+    this._swap(1, this._count);
+    this._count -= 1;
+    this._sink(1);
+
+    return element;
   }
 
-  /** 
+  /**
    * How many records are in the priority queue?
-   * 
+   *
    * @returns {number} Record count
    */
   count() {
@@ -104,14 +151,19 @@ class MaxHeap {
 
   /**
    * Turn this max heap into a sorted array
-   * 
+   *
    * Destroys the max heap in the process - insert, removeMax, etc will NOT
    * work after this function has been run
-   * 
+   *
    * @returns Sorted storage array. Note that the array is 1-indexed (so the first element is null)
    */
   sort() {
-    // TODO
+    for (let i = this._count; i > 0; i -= 1) {
+      this._swap(1, this._count);
+      this._count -= 1;
+      this._sink(1);
+    }
+    return this._storage;
   }
 }
 
